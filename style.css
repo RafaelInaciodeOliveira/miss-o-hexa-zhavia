@@ -309,3 +309,42 @@ footer {
   font-size: 0.8rem;
   color: #444;
 }
+
+/* Customização Avançada dos Menus de Seleção Cósmicos */
+select.select-space-custom {
+  background-color: #111424 !important; /* Mesma cor de fundo do seu cosmic-panel */
+  color: #ffffff !important;
+  border: 1px solid var(--cosmic-blue) !important;
+  padding: 12px;
+  font-size: 1rem;
+  border-radius: 6px;
+  width: 100%;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 10px rgba(0, 102, 255, 0.1);
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' fill='%230066ff'><polygon points='0,0 10,0 5,5'/></svg>") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 15px center !important;
+  background-size: 12px !important;
+}
+
+select.select-space-custom:focus {
+  border-color: var(--galaxy-gold) !important;
+  box-shadow: 0 0 15px rgba(255, 204, 0, 0.2);
+}
+
+/* 🪐 FORÇAR A ESTILIZAÇÃO DO DROPDOWN INTERNO (OPÇÕES DO SELETOR) */
+select.select-space-custom option,
+.select-space-custom option,
+#select-1-lugar option,
+#select-2-lugar option,
+#select-3-lugar option {
+  background-color: #111424 !important; /* Força o fundo escuro do painel ao abrir */
+  color: #ffffff !important;            /* Força as letras a ficarem brancas */
+  padding: 12px !important;
+  font-size: 1rem !important;
+}

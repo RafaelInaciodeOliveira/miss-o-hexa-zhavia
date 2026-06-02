@@ -1,10 +1,5 @@
 const definicaoGrupos = {
-  A: [
-    "México 🇲🇽",
-    "África do Sul 🇿🇦",
-    "Coreia do Sul 🇰🇷",
-    "República Tcheca 🇨🇿",
-  ],
+  A: ["México 🇲🇽", "África do Sul 🇿🇦", "Coreia do Sul 🇰🇷", "República Tcheca 🇨🇿"],
   B: ["Canadá 🇨🇦", "Suíça 🇨🇭", "Catar 🇶🇦", "Bósnia e Herzegovina 🇧🇦"],
   C: ["Brasil 🇧🇷", "Marrocos 🇲🇦", "Escócia 🏴󠁧󠁢󠁳󠁣󠁴󠁿", "Haiti 🇭🇹"],
   D: ["Estados Unidos 🇺🇸", "Paraguai 🇵🇾", "Austrália 🇦🇺", "Turquia 🇹🇷"],
@@ -19,18 +14,8 @@ const definicaoGrupos = {
 };
 
 let escolhasDosGrupos = {
-  A: [],
-  B: [],
-  C: [],
-  D: [],
-  E: [],
-  F: [],
-  G: [],
-  H: [],
-  I: [],
-  J: [],
-  K: [],
-  L: [],
+  A: [], B: [], C: [], D: [], E: [], F: [],
+  G: [], H: [], I: [], J: [], K: [], L: [],
 };
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -50,6 +35,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("username").value = "";
   desenharPainelDeGrupos();
   carregarPalpitesDaPlanilha();
+  controlarVisibilidadeRadar();
 });
 
 function mudarAba(nomeAba) {
@@ -60,14 +46,19 @@ function mudarAba(nomeAba) {
     .querySelectorAll(".nav-btn")
     .forEach((btn) => btn.classList.remove("active"));
   document.getElementById(`aba-${nomeAba}`).classList.add("active");
-  event.currentTarget.classList.add("active");
+  if (event && event.currentTarget) {
+    event.currentTarget.classList.add("active");
+  }
+
+  // Renderiza as bandeiras nos selects quando a aba do pódio abre
+  if (nomeAba === 'podio' && window.twemoji) {
+    twemoji.parse(document.getElementById("painel-formulario-podio"));
+  }
 }
 
-// 🪐 FUNÇÃO DO ALERTA ESPACIAL ESTILIZADO
 function mostrarAlertaCosmico(mensagem, titulo = "⚠️ Alerta de Órbita") {
   document.getElementById("space-alert-title").innerText = titulo;
   document.getElementById("space-alert-msg").innerText = mensagem;
-
   const modal = document.getElementById("space-alert-modal");
   modal.style.display = "flex";
 }
@@ -86,10 +77,10 @@ function desenharPainelDeGrupos() {
     let htmlTimes = `<h3>Grupo ${letra}</h3>`;
     definicaoGrupos[letra].forEach((time, idx) => {
       htmlTimes += `
-                <div class="label-time-checkbox" id="time-${letra}-${idx}" onclick="selecionarPosicaoTime('${letra}', '${time}', ${idx})">
-                    <span class="badge-posicao" id="badge-${letra}-${idx}" style="display:inline-block; width:24px; font-weight:bold; color:#666;">•</span>
-                    <span style="color:#fff; font-size:1.1rem;">${time}</span>
-                </div>`;
+        <div class="label-time-checkbox" id="time-${letra}-${idx}" onclick="selecionarPosicaoTime('${letra}', '${time}', ${idx})">
+            <span class="badge-posicao" id="badge-${letra}-${idx}" style="display:inline-block; width:24px; font-weight:bold; color:#666;">•</span>
+            <span style="color:#fff; font-size:1.1rem;">${time}</span>
+        </div>`;
     });
     card.innerHTML = htmlTimes;
     grid.appendChild(card);
@@ -145,7 +136,6 @@ function salvarPalpitesGrupoApenas() {
   const msg = document.getElementById("saved-msg");
   const btn = document.getElementById("btn-enviar");
 
-  // 🔒 TRAVA DE DISPOSITIVO: Impede múltiplos envios da mesma máquina
   if (localStorage.getItem("bolao_hexa_enviado") === "true") {
     mostrarAlertaCosmico(
       "Sua telemetria já foi transmitida para a base! Não é permitido enviar múltiplos palpites do mesmo dispositivo.",
@@ -195,35 +185,19 @@ function salvarPalpitesGrupoApenas() {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ data: [payload] }),
   })
-    .then((response) => {
-      if (response.ok) {
-        msg.style.color = "#00ff66";
-        msg.innerText = `🚀 Sucesso, ${nome}! Seus palpites de grupos foram computados!`;
+    .then(() => {
+      localStorage.setItem("bolao_hexa_enviado", "true");
+      msg.style.color = "#00ff66";
+      msg.innerText = `🚀 Sucesso, ${nome}! Seus palpites de grupos foram computados!`;
 
-        // 🛑 ATIVA A TRAVA NO NAVEGADOR DO USUÁRIO APÓS O SUCESSO
-        localStorage.setItem("bolao_hexa_enviado", "true");
-
-        document.getElementById("username").value = "";
-        escolhasDosGrupos = {
-          A: [],
-          B: [],
-          C: [],
-          D: [],
-          E: [],
-          F: [],
-          G: [],
-          H: [],
-          I: [],
-          J: [],
-          K: [],
-          L: [],
-        };
-        desenharPainelDeGrupos();
-        carregarPalpitesDaPlanilha();
-      } else {
-        msg.style.color = "#ff3333";
-        msg.innerText = "❌ Falha ao salvar no servidor.";
-      }
+      document.getElementById("username").value = "";
+      escolhasDosGrupos = {
+        A: [], B: [], C: [], D: [], E: [], F: [],
+        G: [], H: [], I: [], J: [], K: [], L: [],
+      };
+      desenharPainelDeGrupos();
+      carregarPalpitesDaPlanilha();
+    controlarVisibilidadeRadar();
     })
     .catch(() => {
       msg.style.color = "#ff3333";
@@ -249,14 +223,14 @@ function carregarPalpitesDaPlanilha() {
       dados.reverse().forEach((item) => {
         const linha = document.createElement("tr");
         linha.innerHTML = `
-                <td style="font-weight:bold; color:#fff; position:sticky; left:0; background:var(--space-panel);">🛸 ${item.Nome}</td>
-                <td style="font-size:0.85rem; white-space:nowrap;">${item.Grupo_A || "-"}</td><td style="font-size:0.85rem; white-space:nowrap;">${item.Grupo_B || "-"}</td>
-                <td style="font-size:0.85rem; white-space:nowrap;">${item.Grupo_C || "-"}</td><td style="font-size:0.85rem; white-space:nowrap;">${item.Grupo_D || "-"}</td>
-                <td style="font-size:0.85rem; white-space:nowrap;">${item.Grupo_E || "-"}</td><td style="font-size:0.85rem; white-space:nowrap;">${item.Grupo_F || "-"}</td>
-                <td style="font-size:0.85rem; white-space:nowrap;">${item.Grupo_G || "-"}</td><td style="font-size:0.85rem; white-space:nowrap;">${item.Grupo_H || "-"}</td>
-                <td style="font-size:0.85rem; white-space:nowrap;">${item.Grupo_I || "-"}</td><td style="font-size:0.85rem; white-space:nowrap;">${item.Grupo_J || "-"}</td>
-                <td style="font-size:0.85rem; white-space:nowrap;">${item.Grupo_K || "-"}</td><td style="font-size:0.85rem; white-space:nowrap;">${item.Grupo_L || "-"}</td>
-                <td style="font-size:0.8rem; color:#aaa;">${item.Data}</td>`;
+            <td style="font-weight:bold; color:#fff; position:sticky; left:0; background:var(--space-panel);">🛸 ${item.Nome}</td>
+            <td style="font-size:0.85rem; white-space:nowrap;">${item.Grupo_A || "-"}</td><td style="font-size:0.85rem; white-space:nowrap;">${item.Grupo_B || "-"}</td>
+            <td style="font-size:0.85rem; white-space:nowrap;">${item.Grupo_C || "-"}</td><td style="font-size:0.85rem; white-space:nowrap;">${item.Grupo_D || "-"}</td>
+            <td style="font-size:0.85rem; white-space:nowrap;">${item.Grupo_E || "-"}</td><td style="font-size:0.85rem; white-space:nowrap;">${item.Grupo_F || "-"}</td>
+            <td style="font-size:0.85rem; white-space:nowrap;">${item.Grupo_G || "-"}</td><td style="font-size:0.85rem; white-space:nowrap;">${item.Grupo_H || "-"}</td>
+            <td style="font-size:0.85rem; white-space:nowrap;">${item.Grupo_I || "-"}</td><td style="font-size:0.85rem; white-space:nowrap;">${item.Grupo_J || "-"}</td>
+            <td style="font-size:0.85rem; white-space:nowrap;">${item.Grupo_K || "-"}</td><td style="font-size:0.85rem; white-space:nowrap;">${item.Grupo_L || "-"}</td>
+            <td style="font-size:0.8rem; color:#aaa;">${item.Data}</td>`;
         cuerpoTabela.appendChild(linha);
       });
 
@@ -268,19 +242,13 @@ function carregarPalpitesDaPlanilha() {
 }
 
 function filtrarTabela() {
-  const filtro = document
-    .getElementById("busca-astronauta")
-    .value.toUpperCase();
-  const linens = document
-    .getElementById("tabela-palpites-corpo")
-    .getElementsByTagName("tr");
+  const filtro = document.getElementById("busca-astronauta").value.toUpperCase();
+  const linens = document.getElementById("tabela-palpites-corpo").getElementsByTagName("tr");
   for (let i = 0; i < linens.length; i++) {
     const col = linens[i].getElementsByTagName("td")[0];
     if (col) {
       linens[i].style.display =
-        (col.textContent || col.innerText).toUpperCase().indexOf(filtro) > -1
-          ? ""
-          : "none";
+        (col.textContent || col.innerText).toUpperCase().indexOf(filtro) > -1 ? "" : "none";
     }
   }
 }
@@ -311,7 +279,7 @@ async function consultarOraculo() {
   }
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
-  const instrucao = `Você é o Oráculo Espacial da empresa Zhavia Aerospace. Responda de forma corta (máximo 3 linhas) e bem-humorada sobre futebol, espaço e zoeira corporativa leve.`;
+  const instrucao = `Você é o Oráculo Espacial da Supercopa Zhavia. Responda de forma curta (máximo 3 linhas) e bem-humorada sobre futebol, espaço e zoeira corporativa leve.`;
 
   try {
     const r = await fetch(url, {
@@ -332,5 +300,84 @@ async function consultarOraculo() {
       "🛸 Falha do Sistema",
     );
     localStorage.removeItem("zhavia_gemini_key");
+  }
+}
+
+function salvarPodioFinal() {
+  const nome = document.getElementById("username-podio").value.trim();
+  const p1 = document.getElementById("select-1-lugar").value;
+  const p2 = document.getElementById("select-2-lugar").value;
+  const p3 = document.getElementById("select-3-lugar").value;
+  const msg = document.getElementById("saved-podio-msg");
+  const btn = document.getElementById("btn-enviar-podio");
+
+  if (localStorage.getItem("bolao_podio_enviado") === "true") {
+    mostrarAlertaCosmico("Sua telemetria de campeões já foi transmitida para a base! Não é permitido enviar múltiplos palpites do mesmo dispositivo.", "🛰️ Pódio Já Registrado");
+    return;
+  }
+
+  if (!nome) { 
+    mostrarAlertaCosmico("Identifique-se com seu nome de astronauta para enviar o pódio!", "🛸 Identificação Necessária"); 
+    return; 
+  }
+  if (!p1 || !p2 || !p3) { 
+    mostrarAlertaCosmico("Você precisa selecionar os três colocados do pódio!", "👑 Pódio Incompleto"); 
+    return; 
+  }
+  if (p1 === p2 || p1 === p3 || p2 === p3) { 
+    mostrarAlertaCosmico("Anomalia detectada! Não é permitido repetir a mesma nação em posições diferentes do pódio.", "🚫 Seleção Duplicada"); 
+    return; 
+  }
+
+  btn.innerText = "Transmitindo pódio à base...";
+  btn.disabled = true;
+
+  const payload = {
+    Nome: nome,
+    Podio_1_Lugar: p1,
+    Podio_2_Lugar: p2,
+    Podio_3_Lugar: p3,
+    Data: new Date().toLocaleString("pt-BR"),
+  };
+
+  const urlPlanilha = "https://sheetdb.io/api/v1/uydiragrvi7jc?sheet=Podio";
+
+  fetch(urlPlanilha, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ data: [payload] }),
+  })
+    .then(() => {
+      localStorage.setItem("bolao_podio_enviado", "true");
+      msg.style.color = "#00ff66";
+      msg.innerText = `👑 Sucesso! O pódio do astronauta ${nome} foi eternizado!`;
+      
+      document.getElementById("username-podio").value = "";
+      document.getElementById("select-1-lugar").value = "";
+      document.getElementById("select-2-lugar").value = "";
+      document.getElementById("select-3-lugar").value = "";
+    })
+    .catch(() => {
+      msg.style.color = "#ff3333";
+      msg.innerText = "❌ Erro na conexão orbital.";
+    })
+    .finally(() => {
+      btn.innerText = "GRAVAR PÓDIO NA BASE 🚀";
+      btn.disabled = false;
+    });
+}
+// Gerencia se a tabela fica escondida ou visível baseada no palpite
+function controlarVisibilidadeRadar() {
+  const painelBloqueado = document.getElementById("radar-bloqueado");
+  const painelConteudo = document.getElementById("radar-conteudo");
+  
+  if (!painelBloqueado || !painelConteudo) return;
+
+  if (localStorage.getItem("bolao_hexa_enviado") === "true") {
+    painelBloqueado.style.display = "none";  // Some o aviso de bloqueado
+    painelConteudo.style.display = "block";  // Mostra a tabela de palpites
+  } else {
+    painelBloqueado.style.display = "block"; // Mantém o aviso ativo
+    painelConteudo.style.display = "none";  // Esconde a tabela
   }
 }
