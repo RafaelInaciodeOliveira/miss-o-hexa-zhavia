@@ -348,3 +348,319 @@ select.select-space-custom option,
   padding: 12px !important;
   font-size: 1rem !important;
 }
+/* ==========================================================================
+   📡 DESIGN SISTEMA DE RADAR / CENTRAL DE TRANSMISSÃO REESTILIZADA
+   ========================================================================== */
+
+/* Base e Comportamento de Transição do Painel Lateral */
+#painel-lateral-jogos {
+  position: fixed;
+  top: 90px;
+  right: 20px;
+  z-index: 1000;
+  background: rgba(10, 12, 26, 0.93);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 102, 255, 0.35);
+  box-shadow:
+    0 0 30px rgba(0, 66, 255, 0.2),
+    inset 0 0 15px rgba(0, 102, 255, 0.1);
+  transition: all 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Estado 1: Painel Expandido (Normal) */
+.painel-lateral-expandido {
+  width: 330px;
+  max-height: calc(100vh - 130px);
+  overflow-y: auto;
+  border-radius: 14px !important;
+  padding: 18px !important;
+}
+
+/* Estado 2: Painel Oculto (Estilo Gadget/Radar Circular) */
+.painel-lateral-oculto {
+  width: 65px !important;
+  height: 65px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  overflow: hidden;
+  border-color: var(--nebula-green) !important;
+  box-shadow: 0 0 25px rgba(0, 255, 102, 0.35) !important;
+  background: rgba(0, 6, 15, 0.95) !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+/* Header interno do Radar */
+.cabecalho-radar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.titulo-radar {
+  color: var(--galaxy-gold);
+  font-size: 1rem;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Luz piscante de Telemetria Ativa */
+.radar-ping {
+  width: 8px;
+  height: 8px;
+  background-color: #ff3333;
+  border-radius: 50%;
+  display: inline-block;
+  box-shadow: 0 0 8px #ff3333;
+  animation: pingDoSatelite 1.5s infinite;
+}
+
+@keyframes pingDoSatelite {
+  0% {
+    transform: scale(0.9);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.4;
+    box-shadow: 0 0 12px #ff3333;
+  }
+  100% {
+    transform: scale(0.9);
+    opacity: 1;
+  }
+}
+
+/* Botão Switch Futurista */
+.switch-btn-espacial {
+  background: rgba(0, 102, 255, 0.1);
+  border: 1px solid var(--cosmic-blue);
+  border-radius: 30px;
+  color: #c4d1ff;
+  padding: 5px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.25s ease;
+  letter-spacing: 0.5px;
+}
+
+.switch-btn-espacial:hover {
+  background: var(--cosmic-blue);
+  color: #fff;
+  box-shadow: 0 0 12px rgba(0, 102, 255, 0.6);
+  transform: scale(1.03);
+}
+
+/* Componentes Visuais do Mini-Radar Pulsante (Quando oculto) */
+#radar-minimizado-trigger {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.radar-icon-mini {
+  font-size: 1.4rem;
+  z-index: 2;
+  transition: transform 0.3s;
+}
+
+#radar-minimizado-trigger:hover .radar-icon-mini {
+  transform: scale(1.2) rotate(10deg);
+}
+
+.sonar-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.sonar-wave {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: rgba(0, 255, 102, 0.25);
+  z-index: 1;
+  pointer-events: none;
+  animation: ondasRadar 1.8s infinite linear;
+}
+
+@keyframes ondasRadar {
+  0% {
+    transform: scale(0.6);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+/* Customização da barra de rolagem da aba de Histórico do Radar */
+#radar-bloco-historico::-webkit-scrollbar {
+  width: 5px;
+}
+#radar-bloco-historico::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+#radar-bloco-historico::-webkit-scrollbar-thumb {
+  background: var(--cosmic-blue);
+  border-radius: 4px;
+}
+#radar-bloco-historico::-webkit-scrollbar-thumb:hover {
+  background: var(--nebula-green);
+}
+/* ==========================================================================
+   🥇 ESTILIZAÇÃO DO PÓDIO CÓSMICO (RANKING) & MODAL DE DETALHES
+   ========================================================================== */
+
+/* Cores de Destaque para o Pódio */
+.podio-1 {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 204, 0, 0.15) 0%,
+    rgba(0, 0, 0, 0) 100%
+  ) !important;
+  border-left: 4px solid var(--galaxy-gold) !important;
+}
+.podio-1 .posicao-num {
+  color: var(--galaxy-gold) !important;
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.podio-2 {
+  background: linear-gradient(
+    90deg,
+    rgba(200, 200, 200, 0.15) 0%,
+    rgba(0, 0, 0, 0) 100%
+  ) !important;
+  border-left: 4px solid #d1d1d1 !important;
+}
+.podio-2 .posicao-num {
+  color: #d1d1d1 !important;
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.podio-3 {
+  background: linear-gradient(
+    90deg,
+    rgba(205, 127, 50, 0.15) 0%,
+    rgba(0, 0, 0, 0) 100%
+  ) !important;
+  border-left: 4px solid #cd7f32 !important;
+}
+.podio-3 .posicao-num {
+  color: #cd7f32 !important;
+  font-weight: bold;
+  font-size: 1.05rem;
+}
+
+/* Linha de clique do Ranking */
+.ranking-row-clicavel {
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    background-color 0.2s ease;
+}
+.ranking-row-clicavel:hover {
+  background-color: rgba(0, 102, 255, 0.1) !important;
+  transform: translateX(4px);
+}
+
+/* Modal de Detalhes do Usuário (Palpites) */
+.modal-detalhes-astronauta {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(3, 4, 8, 0.85);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+.modal-detalhes-content {
+  background: var(--space-panel);
+  border: 1px solid var(--cosmic-blue);
+  box-shadow: 0 0 30px rgba(0, 102, 255, 0.3);
+  width: 90%;
+  max-width: 500px;
+  border-radius: 12px;
+  padding: 24px;
+  position: relative;
+  animation: scaleUp 0.3s ease;
+}
+.modal-detalhes-fechar {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: none;
+  border: none;
+  color: #667099;
+  font-size: 1.3rem;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.modal-detalhes-fechar:hover {
+  color: #ff3333;
+}
+
+/* Banner de Alerta de Gol Volátil */
+.banner-alerta-gol {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 6, 15, 0.95);
+  border: 2px solid var(--nebula-green);
+  box-shadow: 0 0 25px rgba(0, 255, 102, 0.4);
+  padding: 15px 30px;
+  border-radius: 50px;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  animation: slideDownIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+@keyframes slideDownIn {
+  0% {
+    top: -80px;
+    opacity: 0;
+  }
+  100% {
+    top: 20px;
+    opacity: 1;
+  }
+}
+/* 🚫 ELIMINA O SCROLL HORIZONTAL NO RANKING */
+#aba-ranking .cosmic-panel div {
+  overflow-x: hidden !important;
+}
+
+/* 🧬 AJUSTE DE TRANSIÇÃO DO MOUSE PARA EVITAR EMPURRÃO */
+.ranking-row-clicavel {
+  box-sizing: border-box;
+}
+
+.ranking-row-clicavel:hover {
+  background-color: rgba(0, 102, 255, 0.1) !important;
+  /* Removemos o translateX para não empurrar a linha para fora da tela */
+}

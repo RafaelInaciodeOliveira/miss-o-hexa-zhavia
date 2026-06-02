@@ -426,8 +426,8 @@ function controlarVisibilidadeRadar() {
   }
 }
 
-// 🌐 BUSCA OS DADOS REAIS DO RANKING DA PLANILHA DO GOOGLE (Lógica Blindada Mapeada por Chaves Limpas)
 // 🌐 BUSCA OS DADOS REAIS DO RANKING DA PLANILHA DO GOOGLE
+// 🌐 BUSCA OS DADOS REAIS DO RANKING DA PLANILHA DO GOOGLE (VERSÃO BLINDADA)
 function carregarRankingGeralDaPlanilha() {
   const urlRanking =
     "https://sheetdb.io/api/v1/uydiragrvi7jc?sheet=Classificacao";
@@ -445,12 +445,10 @@ function carregarRankingGeralDaPlanilha() {
         return;
       }
 
-      dados.forEach((item) => {
-        // Puxa as propriedades exatas da planilha
-        const posicao = item.Posicao || item.posicao || "•";
+      dados.forEach((item, index) => {
+        const posicaoRaw = item.Posicao || item.posicao || "";
         const nomeAstronauta = item.Astronauta || item.astronauta;
 
-        // 🛰️ CAPTURA INTELIGENTE: Tenta ler "Pontuacao Total", se não achar tenta "Pontuacao"
         let pontos =
           item["Pontuacao Total"] ||
           item["Pontuacaototal"] ||
@@ -458,12 +456,10 @@ function carregarRankingGeralDaPlanilha() {
           item.pontuacao ||
           "0";
 
-        // Filtro contra erros de processamento temporários da planilha
         if (pontos === "#N/A" || pontos === "#REF!") {
           pontos = "0";
         }
 
-        // Ignora linhas totalmente vazias ou o cabeçalho caso a API duplique
         if (
           !nomeAstronauta ||
           nomeAstronauta.trim() === "" ||
@@ -474,9 +470,27 @@ function carregarRankingGeralDaPlanilha() {
         const linha = document.createElement("tr");
         linha.style.borderBottom = "1px solid #222";
 
+        // 🥇 TRATAMENTO SEGURO DO PÓDIO: Evita travar com caracteres como "•"
+        let classePodio = "";
+        const numPosicao = parseInt(posicaoRaw, 10);
+
+        if (!isNaN(numPosicao)) {
+          if (numPosicao === 1) classePodio = "podio-1";
+          else if (numPosicao === 2) classePodio = "podio-2";
+          else if (numPosicao === 3) classePodio = "podio-3";
+        }
+
+        linha.className = `ranking-row-clicavel ${classePodio}`;
+        linha.onclick = () => abrirDetalhesAstronauta(nomeAstronauta);
+
+        // Exibe o número com º apenas se for um número válido, senão exibe o caractere da planilha
+        const exibicaoPosicao = !isNaN(numPosicao)
+          ? `${numPosicao}º`
+          : `${posicaoRaw}`;
+
         linha.innerHTML = `
-            <td style="padding: 14px 8px; font-weight: bold; color: var(--galaxy-gold); font-size: 1.1rem; text-align: left;">
-              ${posicao}º
+            <td class="posicao-num" style="padding: 14px 8px; font-weight: bold; color: var(--galaxy-gold); font-size: 1.1rem; text-align: left;">
+              ${exibicaoPosicao}
             </td>
             <td style="padding: 14px 8px; font-weight: bold; color: #fff; text-align: left;">
               👨‍🚀 ${nomeAstronauta}
@@ -496,4 +510,369 @@ function carregarRankingGeralDaPlanilha() {
       console.error("Erro na sincronização:", erro);
       corpoTabela.innerHTML = `<tr><td colspan="3" style="text-align: center; padding: 20px; color: #ff3333;">❌ Falha na conexão com o satélite de pontuação.</td></tr>`;
     });
+}
+
+// 📊 ADICIONANDO: CONEXÃO COM A API DE FUTEBOL (NÃO MEXE EM NADA DO ANTERIOR)
+// 🌐 BUSCA E GERENCIA OS PLACARES COM SISTEMA DE CACHE CÓSMICO (EVITA ACABAR OS CRÉDITOS DA API)
+function carregarPlacaresAoVivoDaCopa() {
+  const containerLive = document.getElementById("container-jogos-live");
+  if (!containerLive) return;
+
+  const AGORA = Date.now();
+  const QUINZE_MINUTOS = 15 * 60 * 1000; // Tempo em milissegundos
+
+  const cacheSalvo = localStorage.getItem("zhavia_cache_futebol");
+  const cacheTempo = localStorage.getItem("zhavia_cache_tempo");
+
+  // 🛰️ SE O CACHE EXISTIR E FOR RECENTE: Usa os dados locais e evita gastar a API!
+  if (cacheSalvo && cacheTempo && AGORA - cacheTempo < QUINZE_MINUTOS) {
+    console.log("🚀 Telemetria recuperada do cache local para poupar energia.");
+    renderizarPainelJogos(JSON.parse(cacheSalvo));
+    return;
+  }
+
+  // 🔑 CREDENCIAIS DO SEU RADAR ESPACIAL
+  const tokenAPIFootball = "2b88600ff5defe42d6baa283c8aca0f6";
+  const urlAPI =
+    "https://v3.football.api-sports.io/fixtures?league=1&season=2026";
+
+  console.log("📡 Conectando aos satélites da API-Sports para novos dados...");
+
+  fetch(urlAPI, {
+    method: "GET",
+    headers: {
+      "x-rapidapi-host": "v3.football.api-sports.io",
+      "x-rapidapi-key": tokenAPIFootball,
+    },
+  })
+    .then((res) => res.json())
+    .then((dados) => {
+      if (dados.response && dados.response.length > 0) {
+        verificarNovosGols(dados.response);
+        // Salva os novos dados no Cache do Navegador
+        localStorage.setItem(
+          "zhavia_cache_futebol",
+          JSON.stringify(dados.response),
+        );
+        localStorage.setItem("zhavia_cache_tempo", AGORA.toString());
+        renderizarPainelJogos(dados.response);
+      } else {
+        // Se a API retornar vazio mas tiver cache antigo, usa o antigo para não quebrar a tela
+        if (cacheSalvo) renderizarPainelJogos(JSON.parse(cacheSalvo));
+        else
+          containerLive.innerHTML = `<p style="color: #666; text-align: center; font-size: 0.85rem;">Nenhum jogo agendado.</p>`;
+      }
+    })
+    .catch((err) => {
+      console.error("Erro radar esportivo:", err);
+      if (cacheSalvo) {
+        renderizarPainelJogos(JSON.parse(cacheSalvo));
+      } else {
+        containerLive.innerHTML = `<p style="color: #ff3333; text-align: center; font-size: 0.85rem;">Falha na telemetria dos placares.</p>`;
+      }
+    });
+}
+
+// 🖨️ FUNÇÃO AUXILIAR PARA MONTAR AS ABAS E LISTAR TODOS OS JOGOS
+function renderizarPainelJogos(jogos) {
+  const container = document.getElementById("container-jogos-live");
+  if (!container) return;
+
+  // Cria a estrutura das mini-abas se elas não existirem na barra lateral
+  container.innerHTML = `
+    <div style="display: flex; gap: 5px; margin-bottom: 12px; border-bottom: 1px solid rgba(0,102,255,0.2); padding-bottom: 8px;">
+      <button id="tab-radar-live" onclick="alternarSubAbaRadar('live')" style="flex:1; background:var(--cosmic-blue); border:none; color:#fff; padding:6px; font-size:0.75rem; font-weight:bold; border-radius:4px; cursor:pointer;">AO VIVO / HOJE</button>
+      <button id="tab-radar-hist" onclick="alternarSubAbaRadar('hist')" style="flex:1; background:rgba(255,255,255,0.05); border:1px solid #222; color:#aaa; padding:6px; font-size:0.75rem; font-weight:bold; border-radius:4px; cursor:pointer;">RESULTADOS</button>
+    </div>
+    <div id="radar-bloco-live"></div>
+    <div id="radar-bloco-historico" style="display:none; max-height: 250px; overflow-y:auto; gap:8px; flex-direction:column;"></div>
+  `;
+
+  const blocoLive = document.getElementById("radar-bloco-live");
+  const blocoHist = document.getElementById("radar-bloco-historico");
+
+  let contLive = 0;
+  let contHist = 0;
+
+  // Ordena os jogos por data (mais antigos primeiro para o histórico fazer sentido)
+  jogos.sort((a, b) => new Date(a.fixture.date) - new Date(b.fixture.date));
+
+  jogos.forEach((confronto) => {
+    const item = confronto.fixture;
+    const times = confronto.teams;
+    const gols = confronto.goals;
+    const status = item.status.short;
+
+    let tempoDeJogo = status;
+    let corStatus = "#aaa";
+    let ehLive = false;
+
+    if (["1H", "2H", "HT", "ET", "P"].includes(status)) {
+      tempoDeJogo = `LIVE • ${item.status.elapsed}'`;
+      corStatus = "var(--nebula-green)";
+      ehLive = true;
+    } else if (status === "FT") {
+      tempoDeJogo = "Encerrado";
+      corStatus = "#667099";
+    } else {
+      const dataJogo = new Date(item.date);
+      tempoDeJogo =
+        dataJogo.toLocaleDateString("pt-BR", {
+          day: "2-digit",
+          month: "2-digit",
+        }) +
+        " " +
+        dataJogo.toLocaleTimeString("pt-BR", {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+    }
+
+    const cardHtml = `
+      <div style="background: rgba(0, 0, 0, 0.4); padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.03); display: flex; flex-direction: column; gap: 4px; margin-bottom:8px;">
+        <div style="display: flex; justify-content: space-between; font-size: 0.7rem; font-weight: bold; color: ${corStatus};">
+          <span>🎯 ${item.status.long}</span>
+          <span>${tempoDeJogo}</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 3px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="color: #fff; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+              <img src="${times.home.logo}" style="width: 14px; height: 14px;"> ${times.home.name}
+            </span>
+            <strong style="color: var(--galaxy-gold); font-size: 1rem;">${gols.home !== null ? gols.home : "-"}</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="color: #fff; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+              <img src="${times.away.logo}" style="width: 14px; height: 14px;"> ${times.away.name}
+            </span>
+            <strong style="color: var(--galaxy-gold); font-size: 1rem;">${gols.away !== null ? gols.away : "-"}</strong>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Distribui o jogo para a aba correta
+    if (ehLive || status === "NS") {
+      // Se está rolando agora ou se ainda não começou (Próximos jogos)
+      blocoLive.insertAdjacentHTML("beforeend", cardHtml);
+      contLive++;
+    } else if (status === "FT") {
+      // Se o jogo já terminou por completo
+      blocoHist.insertAdjacentHTML("beforeend", cardHtml);
+      contHist++;
+    }
+  });
+
+  if (contLive === 0) {
+    blocoLive.innerHTML = `<p style="color: #666; text-align: center; font-size: 0.8rem; padding: 10px;">Nenhum jogo rolando ou agendado para hoje.</p>`;
+  }
+  if (contHist === 0) {
+    blocoHist.innerHTML = `<p style="color: #666; text-align: center; font-size: 0.8rem; padding: 10px;">Nenhum resultado computado ainda.</p>`;
+  }
+}
+
+// 🔌 CONTROLE DE SELEÇÃO DE ABAS DENTRO DO RADAR
+function alternarSubAbaRadar(tipo) {
+  const btnLive = document.getElementById("tab-radar-live");
+  const btnHist = document.getElementById("tab-radar-hist");
+  const blocoLive = document.getElementById("radar-bloco-live");
+  const blocoHist = document.getElementById("radar-bloco-historico");
+
+  if (tipo === "live") {
+    blocoLive.style.display = "block";
+    blocoHist.style.display = "none";
+    btnLive.style.background = "var(--cosmic-blue)";
+    btnLive.style.color = "#fff";
+    btnLive.style.border = "none";
+    btnHist.style.background = "rgba(255,255,255,0.05)";
+    btnHist.style.color = "#aaa";
+    btnHist.style.border = "1px solid #222";
+  } else {
+    blocoLive.style.display = "none";
+    blocoHist.style.display = "flex";
+    btnHist.style.background = "var(--cosmic-blue)";
+    btnHist.style.color = "#fff";
+    btnHist.style.border = "none";
+    btnLive.style.background = "rgba(255,255,255,0.05)";
+    btnLive.style.color = "#aaa";
+    btnLive.style.border = "1px solid #222";
+  }
+}
+
+// ⚡ ACIONAMENTO AUTOMÁTICO DO SCRIPT
+window.addEventListener("load", () => {
+  carregarPlacaresAoVivoDaCopa();
+  // Verifica o cache local a cada 2 minutos (Sem gastar requisição da API externa)
+  setInterval(carregarPlacaresAoVivoDaCopa, 120000);
+});
+// 🛸 ADICIONADO: FUNÇÃO DE MINIMIZAÇÃO E EXPANÇÃO DO RADAR (OCULTAR / EXIBIR)
+let painelAberto = true;
+
+function alternarPainelLateral() {
+  const painel = document.getElementById("painel-lateral-jogos");
+  const conteudo = document.getElementById("conteudo-painel-lateral");
+  const botaoTexto = document.getElementById("btn-texto-switch");
+  const gatilhoMini = document.getElementById("radar-minimizado-trigger");
+  const cabecalho = document.querySelector(".cabecalho-radar");
+
+  if (!painel || !conteudo || !botaoTexto || !gatilhoMini) return;
+
+  if (painelAberto) {
+    // 🎯 MODO OCULTO: Transforma o painel lateral em um gadget redondo pulsante
+    conteudo.style.display = "none";
+    cabecalho.style.display = "none";
+    gatilhoMini.style.display = "flex";
+
+    painel.className = "cosmic-panel painel-lateral-oculto";
+    painelAberto = false;
+  } else {
+    // 🌌 MODO EXPANDIDO: Retorna ao painel de monitoramento completo
+    gatilhoMini.style.display = "none";
+    conteudo.style.display = "block";
+    cabecalho.style.display = "flex";
+
+    painel.className = "cosmic-panel painel-lateral-expandido";
+    painelAberto = true;
+  }
+}
+// 🔒 POP-UP DE DETALHES EVOLUÍDO: BUSCA OS PALPITES REAIS DO USUÁRIO NA BASE
+function abrirDetalhesAstronauta(nomeSelecionado) {
+  const jaVotouAba2 = localStorage.getItem("bolao_hexa_enviado");
+
+  if (jaVotouAba2 !== "true") {
+    mostrarAlertaCosmico(
+      "⚠️ Você precisa enviar seus palpites na 'Aba 2: Classificados' primeiro para ganhar autorização de espionar a telemetria de outros astronautas!",
+      "Acesso Bloqueado",
+    );
+    return;
+  }
+
+  // Cria a estrutura inicial do Modal na tela com um feedback de carregamento
+  const modal = document.createElement("div");
+  modal.className = "modal-detalhes-astronauta";
+  modal.id = "modal-espiao-astronauta";
+
+  modal.innerHTML = `
+    <div class="modal-detalhes-content" style="max-height: 85vh; overflow-y: auto;">
+      <button class="modal-detalhes-fechar" onclick="document.getElementById('modal-espiao-astronauta').remove()">✕</button>
+      <h3 style="color:var(--galaxy-gold); margin-bottom:15px; font-size:1.25rem; display:flex; align-items:center; gap:8px;">
+        📊 Telemetria de Palpites: ${nomeSelecionado}
+      </h3>
+      <div id="detalhes-painel-interno" style="display:flex; flex-direction:column; gap:10px; font-size:0.9rem;">
+        <p style="color:#667099; text-align:center; padding: 20px;">Sincronizando satélites para descriptografar palpites...</p>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  // Faz a busca na base principal de palpites para descobrir as escolhas do astronauta clicado
+  const urlBasePalpites = "https://sheetdb.io/api/v1/uydiragrvi7jc";
+
+  fetch(urlBasePalpites)
+    .then((r) => r.json())
+    .then((dados) => {
+      const painelInterno = document.getElementById("detalhes-painel-interno");
+      if (!painelInterno) return;
+
+      // Procura a linha correspondente ao nome do colega clicado
+      const palpiteUsuario = dados.find(
+        (item) =>
+          item.Nome &&
+          item.Nome.trim().toUpperCase() ===
+            nomeSelecionado.trim().toUpperCase(),
+      );
+
+      if (!palpiteUsuario) {
+        painelInterno.innerHTML = `<p style="color:#ff3333; text-align:center;">Nenhum registro de grupos encontrado para este astronauta na base ativa.</p>`;
+        return;
+      }
+
+      // Monta uma lista organizada e compacta com as escolhas de todos os grupos
+      let htmlPalpites = `<div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:8px; margin-top:5px;">`;
+
+      const letrasGrupos = [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H",
+        "I",
+        "J",
+        "K",
+        "L",
+      ];
+      letrasGrupos.forEach((letra) => {
+        const dadosGrupo = palpiteUsuario[`Grupo_${letra}`] || "Não enviado";
+        htmlPalpites += `
+          <div style="background:rgba(0,0,0,0.25); padding:8px; border-radius:6px; border:1px solid rgba(0,102,255,0.15);">
+            <strong style="color:var(--galaxy-gold); display:block; margin-bottom:3px; font-size:0.8rem;">Grupo ${letra}</strong>
+            <span style="color:#fff; font-size:0.75rem; display:block; line-height:1.3;">${dadosGrupo.replace(" / ", "<br>")}</span>
+          </div>
+        `;
+      });
+
+      htmlPalpites += `</div>`;
+
+      // Rodapé informativo sobre a Aba 3 que será liberada no futuro
+      htmlPalpites += `
+        <hr style="border:0; border-top:1px solid rgba(255,255,255,0.05); margin:12px 0 5px 0;">
+        <p style="color:#667099; text-align:center; font-size:0.75rem; font-style:italic;">[Pódio Final Supremo protegido por criptografia - Liberado nas Oitavas]</p>
+      `;
+
+      painelInterno.innerHTML = htmlPalpites;
+
+      // Aplica o Twemoji para renderizar as bandeirinhas no Pop-up perfeitamente
+      if (window.twemoji) {
+        twemoji.parse(painelInterno);
+      }
+    })
+    .catch((err) => {
+      console.error("Erro ao descriptografar palpites:", err);
+      const painelInterno = document.getElementById("detalhes-painel-interno");
+      if (painelInterno) {
+        painelInterno.innerHTML = `<p style="color:#ff3333; text-align:center;">Falha na conexão de rádio com o banco de palpites.</p>`;
+      }
+    });
+}
+
+// ⚠️ SISTEMA AUTOMÁTICO DE DETECÇÃO E ALERTA FLASH DE GOLS
+function verificarNovosGols(dadosNovos) {
+  const cacheAntigo = localStorage.getItem("zhavia_cache_futebol");
+  if (!cacheAntigo) return;
+
+  const dadosAntigos = JSON.parse(cacheAntigo);
+
+  dadosNovos.forEach((jogoNovo) => {
+    const jogoAntigo = dadosAntigos.find(
+      (j) => j.fixture.id === jogoNovo.fixture.id,
+    );
+
+    if (jogoAntigo && jogoNovo.goals) {
+      const golHomeMudou = jogoNovo.goals.home > jogoAntigo.goals.home;
+      const golAwayMudou = jogoNovo.goals.away > jogoAntigo.goals.away;
+
+      if (golHomeMudou || golAwayMudou) {
+        // 🔥 DISPARA BANNER FLASH NO TOPO DA TELA!
+        const banner = document.createElement("div");
+        banner.className = "banner-alerta-gol";
+        banner.id = "flash-gol";
+        banner.innerHTML = `
+          <span style="font-size:1.3rem;">⚽</span>
+          <span style="color:#fff; font-weight:bold; font-size:0.95rem;">
+            GOOOL NA COPA! ${jogoNovo.teams.home.name} ${jogoNovo.goals.home} x ${jogoNovo.goals.away} ${jogoNovo.teams.away.name}
+          </span>
+        `;
+        document.body.appendChild(banner);
+
+        // Remove o banner sozinho após 6 segundos
+        setTimeout(() => {
+          if (document.getElementById("flash-gol"))
+            document.getElementById("flash-gol").remove();
+        }, 6000);
+      }
+    }
+  });
 }

@@ -768,7 +768,105 @@
         </div>
       </section>
     </main>
+    <aside
+      id="painel-lateral-jogos"
+      class="cosmic-panel painel-lateral-expandido"
+    >
+      <div class="cabecalho-radar">
+        <h3 class="titulo-radar">
+          <span class="radar-ping"></span>
+          🎥 Central de Transmissão
+        </h3>
+        <button
+          id="btn-minimizar-painel"
+          onclick="alternarPainelLateral()"
+          class="switch-btn-espacial"
+        >
+          <span class="switch-icon">🛰️</span>
+          <span id="btn-texto-switch">Ocultar</span>
+        </button>
+      </div>
 
+      <div
+        id="radar-minimizado-trigger"
+        onclick="alternarPainelLateral()"
+        style="display: none"
+      >
+        <div class="sonar-wrapper">
+          <div class="sonar-wave"></div>
+          <span class="radar-icon-mini">📺</span>
+        </div>
+      </div>
+
+      <div id="conteudo-painel-lateral">
+        <div style="margin-bottom: 20px">
+          <div
+            style="
+              position: relative;
+              padding-bottom: 56.25%;
+              height: 0;
+              overflow: hidden;
+              border-radius: 6px;
+              border: 1px solid #1c233a;
+            "
+          >
+            <iframe
+              id="player-cazetv"
+              style="
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+              "
+              src="https://www.youtube.com/embed/live_stream?channel=UCm3_j4RLeM0zSerq076Z_fA"
+              frameborder="0"
+              allow="autoplay; encrypted-media"
+              allowfullscreen
+            >
+            </iframe>
+          </div>
+        </div>
+
+        <hr
+          style="
+            border: 0;
+            border-top: 1px solid rgba(0, 102, 255, 0.2);
+            margin: 15px 0;
+          "
+        />
+
+        <div>
+          <h3
+            style="
+              color: var(--nebula-green);
+              font-size: 1.05rem;
+              margin-bottom: 12px;
+              display: flex;
+              align-items: center;
+              gap: 6px;
+            "
+          >
+            ⚽ Placar Orbital Live
+          </h3>
+          <div
+            id="container-jogos-live"
+            style="display: flex; flex-direction: column; gap: 10px"
+          >
+            <p
+              style="
+                color: #667099;
+                font-size: 0.9rem;
+                text-align: center;
+                padding: 10px;
+              "
+            >
+              Sincronizando satélites de telemetria esportiva...
+            </p>
+          </div>
+        </div>
+      </div>
+    </aside>
     <footer>
       <p>
         &copy; Zhavia Aerospace & Esportes. Todos os direitos reservados à
