@@ -16,6 +16,8 @@ async function request(path, options = {}) {
 
 // --- Palpites ---
 export const getPalpites = () => request('/api/palpites');
+export const getNomesPalpites = () => request('/api/palpites/nomes');
+export const checkNomeExiste = (nome) => request(`/api/palpites/existe?nome=${encodeURIComponent(nome)}`);
 export const postPalpite = (nome, grupos) =>
   request('/api/palpites', {
     method: 'POST',

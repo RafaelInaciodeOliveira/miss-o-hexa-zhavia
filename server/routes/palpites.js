@@ -5,6 +5,28 @@ const router = Router();
 
 const LETRAS_GRUPOS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'];
 
+// GET /api/palpites/nomes — Retorna apenas os nomes para autocomplete
+router.get('/nomes', async (_req, res) => {
+  try {
+    const palpites = await Palpite.find({}, 'nome').sort({ nome: 1 });
+    res.json(palpites.map((p) => p.nome));
+  } catch {
+    res.status(500).json({ error: 'Erro ao buscar nomes' });
+  }
+});
+
+// GET /api/palpites/existe?nome=... — Verifica se um nome já enviou palpite
+router.get('/existe', async (req, res) => {
+  const nome = req.query.nome?.trim();
+  if (!nome) return res.status(400).json({ error: 'Nome obrigatório' });
+  try {
+    const existe = await Palpite.exists({ nome: { $regex: `^${nome}$`, $options: 'i' } });
+    res.json({ existe: !!existe });
+  } catch {
+    res.status(500).json({ error: 'Erro ao verificar nome' });
+  }
+});
+
 // GET /api/palpites — Retorna todos os palpites (mais recentes primeiro)
 router.get('/', async (_req, res) => {
   try {

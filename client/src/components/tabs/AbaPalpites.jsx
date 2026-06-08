@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { definicaoGrupos, escolhasIniciais, LETRAS_GRUPOS } from '../../data/grupos.js';
-import { getPalpites, postPalpite } from '../../services/api.js';
+import { getPalpites, postPalpite, checkNomeExiste, getNomesPalpites } from '../../services/api.js';
 import { useAlerta } from '../../context/AlertContext.jsx';
 import DetalhesAstronauta from '../DetalhesAstronauta.jsx';
 
@@ -16,6 +16,10 @@ export default function AbaPalpites({ onPalpiteEnviado }) {
   const [palpites, setPalpites] = useState([]);
   const [filtro, setFiltro] = useState('');
   const [astronautaSelecionado, setAstronautaSelecionado] = useState(null);
+  const [nomeLogin, setNomeLogin] = useState('');
+  const [verificando, setVerificando] = useState(false);
+  const [msgLogin, setMsgLogin] = useState('');
+  const [nomesExistentes, setNomesExistentes] = useState([]);
   const gridRef = useRef(null);
 
   const carregarPalpites = useCallback(async () => {
@@ -30,6 +34,12 @@ export default function AbaPalpites({ onPalpiteEnviado }) {
   useEffect(() => {
     if (jaEnviou) carregarPalpites();
   }, [jaEnviou, carregarPalpites]);
+
+  useEffect(() => {
+    if (!jaEnviou) {
+      getNomesPalpites().then(setNomesExistentes).catch(() => {});
+    }
+  }, [jaEnviou]);
 
   // Aplica Twemoji no grid quando as escolhas mudam
   useEffect(() => {
@@ -104,6 +114,30 @@ export default function AbaPalpites({ onPalpiteEnviado }) {
   const palpitesFiltrados = palpites.filter((p) =>
     p.nome.toUpperCase().includes(filtro.toUpperCase())
   );
+
+  async function handleLogin() {
+    if (!nomeLogin.trim()) {
+      setMsgLogin('⚠️ Digite seu nome para verificar.');
+      return;
+    }
+    setVerificando(true);
+    setMsgLogin('');
+    try {
+      const { existe } = await checkNomeExiste(nomeLogin.trim());
+      if (existe) {
+        localStorage.setItem(JA_ENVIOU_KEY, 'true');
+        setJaEnviou(true);
+        onPalpiteEnviado?.();
+        carregarPalpites();
+      } else {
+        setMsgLogin('❌ Nenhum palpite encontrado com esse nome. Verifique a grafia ou envie seus classificados acima.');
+      }
+    } catch {
+      setMsgLogin('❌ Falha na conexão com a base.');
+    } finally {
+      setVerificando(false);
+    }
+  }
 
   return (
     <section className="tab-content">
@@ -195,12 +229,46 @@ export default function AbaPalpites({ onPalpiteEnviado }) {
         <h2>🏆 Radar de Grupos da Tripulação</h2>
 
         {!jaEnviou ? (
-          <div style={{ textAlign: 'center', padding: '30px 10px', border: '1px dashed #ffcc00', background: 'rgba(255,204,0,0.03)', borderRadius: 8, marginTop: 15 }}>
-            <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: 10 }}>👁️‍🗨️</span>
-            <h3 style={{ color: 'var(--galaxy-gold)', marginBottom: 8 }}>Transmissão em Ponto Cego</h3>
-            <p style={{ color: '#ccc', maxWidth: 500, margin: '0 auto', fontSize: '0.95rem', lineHeight: 1.5 }}>
-              Para visualizar os palpites da tripulação, <strong>envie os seus classificados</strong> primeiro!
-            </p>
+          <div style={{ marginTop: 15 }}>
+            <div style={{ textAlign: 'center', padding: '24px 10px', border: '1px dashed #ffcc00', background: 'rgba(255,204,0,0.03)', borderRadius: 8 }}>
+              <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: 10 }}>👁️‍🗨️</span>
+              <h3 style={{ color: 'var(--galaxy-gold)', marginBottom: 8 }}>Transmissão em Ponto Cego</h3>
+              <p style={{ color: '#ccc', maxWidth: 500, margin: '0 auto', fontSize: '0.95rem', lineHeight: 1.5 }}>
+                Para visualizar os palpites da tripulação, <strong>envie os seus classificados</strong> acima ou confirme seu nome abaixo.
+              </p>
+            </div>
+
+            <div style={{ marginTop: 20, padding: '20px', border: '1px solid rgba(0,102,255,0.3)', borderRadius: 8, background: 'rgba(0,102,255,0.05)' }}>
+              <p style={{ color: '#aaa', marginBottom: 12, fontSize: '0.95rem' }}>
+                🔑 <strong style={{ color: '#fff' }}>Já enviei meus palpites</strong> — confirme seu nome para desbloquear:
+              </p>
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                <input
+                  type="text"
+                  list="nomes-palpites-list"
+                  value={nomeLogin}
+                  onChange={(e) => { setNomeLogin(e.target.value); setMsgLogin(''); }}
+                  onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+                  placeholder="Digite seu nome exatamente como enviou..."
+                  style={{ flex: 1, minWidth: 220, background: 'var(--space-dark)', border: '1px solid #444', color: '#fff', padding: '10px 14px', borderRadius: 6, fontSize: '0.95rem' }}
+                />
+                <datalist id="nomes-palpites-list">
+                  {nomesExistentes.map((n) => <option key={n} value={n} />)}
+                </datalist>
+                <button
+                  onClick={handleLogin}
+                  disabled={verificando}
+                  style={{ background: 'var(--cosmic-blue)', border: 'none', color: '#fff', padding: '10px 22px', borderRadius: 6, cursor: 'pointer', fontWeight: 'bold', fontSize: '0.95rem', opacity: verificando ? 0.6 : 1 }}
+                >
+                  {verificando ? 'Verificando...' : 'Confirmar 🚀'}
+                </button>
+              </div>
+              {msgLogin && (
+                <p style={{ marginTop: 10, fontSize: '0.9rem', color: msgLogin.startsWith('❌') ? '#ff6666' : 'var(--nebula-green)' }}>
+                  {msgLogin}
+                </p>
+              )}
+            </div>
           </div>
         ) : (
           <>
