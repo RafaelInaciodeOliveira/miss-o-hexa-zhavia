@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getRanking } from '../../services/api.js';
+import AvatarNome from '../AvatarNome.jsx';
 
 export default function AbaRanking() {
   const [ranking, setRanking] = useState([]);
@@ -52,7 +53,7 @@ export default function AbaRanking() {
                     {item.posicao}º
                   </td>
                   <td style={{ padding: '14px 8px', fontWeight: 'bold', color: '#fff' }}>
-                    👨‍🚀 {item.astronauta}
+                    <AvatarNome nome={item.astronauta} size={36} fontSize="0.9rem" />
                   </td>
                   <td style={{ padding: '14px 8px', textAlign: 'right', fontWeight: 'bold', color: 'var(--nebula-green)', fontSize: '1.15rem' }}>
                     {item.pontuacao} pts

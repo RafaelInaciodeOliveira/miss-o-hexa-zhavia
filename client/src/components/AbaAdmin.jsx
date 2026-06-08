@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { LETRAS_GRUPOS, definicaoGrupos } from '../data/grupos.js';
 import { timesPodio } from '../data/times.js';
+import AvatarNome from './AvatarNome.jsx';
 
 const BASE = import.meta.env.VITE_API_URL ?? '';
 
@@ -314,7 +315,7 @@ export default function AbaAdmin() {
                   {palpitesFiltrados.map((p, i) => (
                     <tr key={p._id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)' }}>
                       <td style={{ ...tdStyle, fontWeight: 'bold', color: 'var(--galaxy-gold)', whiteSpace: 'nowrap' }}>
-                        👨‍🚀 {p.nome}
+                        <AvatarNome nome={p.nome} size={28} fontSize="0.75rem" />
                       </td>
                       {LETRAS_GRUPOS.map((l) => (
                         <td key={l} style={{ ...tdStyle, fontSize: '0.78rem', color: '#ccc' }}>
@@ -380,7 +381,7 @@ export default function AbaAdmin() {
               <tbody>
                 {podiosFiltrados.map((p, i) => (
                   <tr key={p._id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)' }}>
-                    <td style={{ ...tdStyle, fontWeight: 'bold', color: 'var(--galaxy-gold)' }}>👨‍🚀 {p.nome}</td>
+                    <td style={{ ...tdStyle, fontWeight: 'bold', color: 'var(--galaxy-gold)' }}><AvatarNome nome={p.nome} size={28} fontSize="0.75rem" /></td>
                     <td style={tdStyle}>{p.p1}</td>
                     <td style={tdStyle}>{p.p2}</td>
                     <td style={tdStyle}>{p.p3}</td>

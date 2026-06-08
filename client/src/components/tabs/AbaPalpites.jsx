@@ -3,6 +3,8 @@ import { definicaoGrupos, escolhasIniciais, LETRAS_GRUPOS } from '../../data/gru
 import { getPalpites, postPalpite, checkNomeExiste, getNomesPalpites } from '../../services/api.js';
 import { useAlerta } from '../../context/AlertContext.jsx';
 import DetalhesAstronauta from '../DetalhesAstronauta.jsx';
+import AvatarNome from '../AvatarNome.jsx';
+import AutocompleteNome from '../AutocompleteNome.jsx';
 
 const JA_ENVIOU_KEY = 'bolao_hexa_enviado';
 
@@ -20,6 +22,7 @@ export default function AbaPalpites({ onPalpiteEnviado }) {
   const [verificando, setVerificando] = useState(false);
   const [msgLogin, setMsgLogin] = useState('');
   const [nomesExistentes, setNomesExistentes] = useState([]);
+  const [mostrarLogin, setMostrarLogin] = useState(false);
   const gridRef = useRef(null);
 
   const carregarPalpites = useCallback(async () => {
@@ -129,6 +132,7 @@ export default function AbaPalpites({ onPalpiteEnviado }) {
         setJaEnviou(true);
         onPalpiteEnviado?.();
         carregarPalpites();
+        setMostrarLogin(false);
       } else {
         setMsgLogin('❌ Nenhum palpite encontrado com esse nome. Verifique a grafia ou envie seus classificados acima.');
       }
@@ -148,7 +152,44 @@ export default function AbaPalpites({ onPalpiteEnviado }) {
           <span style={{ color: '#fff' }}><strong>Atenção Tripulante:</strong> Só é possível enviar seus palpites <strong>uma única vez.</strong></span>
         </div>
 
-        <h2>🔮 Simulador de Classificados da Fase de Grupos</h2>
+        <h2 style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          🔮 Simulador de Classificados da Fase de Grupos
+          {!jaEnviou && (
+            <button
+              onClick={() => { setMostrarLogin((v) => !v); setMsgLogin(''); }}
+              style={{ fontSize: '0.8rem', padding: '5px 14px', borderRadius: 20, border: '1px solid var(--cosmic-blue)', background: mostrarLogin ? 'var(--cosmic-blue)' : 'transparent', color: '#fff', cursor: 'pointer', fontWeight: 'bold', whiteSpace: 'nowrap' }}
+            >
+              🔑 Identificar
+            </button>
+          )}
+        </h2>
+
+        {!jaEnviou && mostrarLogin && (
+          <div style={{ margin: '14px 0 20px', padding: '16px', border: '1px solid rgba(0,102,255,0.35)', borderRadius: 8, background: 'rgba(0,102,255,0.06)' }}>
+            <p style={{ color: '#aaa', marginBottom: 10, fontSize: '0.9rem' }}>Já enviou seus palpites? Confirme seu nome para desbloquear o ranking:</p>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+              <AutocompleteNome
+                value={nomeLogin}
+                onChange={(v) => { setNomeLogin(v); setMsgLogin(''); }}
+                onEnter={handleLogin}
+                sugestoes={nomesExistentes}
+                placeholder="Seu nome..."
+              />
+              <button
+                onClick={handleLogin}
+                disabled={verificando}
+                style={{ background: 'var(--cosmic-blue)', border: 'none', color: '#fff', padding: '10px 20px', borderRadius: 6, cursor: 'pointer', fontWeight: 'bold', fontSize: '0.9rem', opacity: verificando ? 0.6 : 1, whiteSpace: 'nowrap' }}
+              >
+                {verificando ? 'Verificando...' : 'Confirmar 🚀'}
+              </button>
+            </div>
+            {msgLogin && (
+              <p style={{ marginTop: 8, fontSize: '0.88rem', color: msgLogin.startsWith('❌') || msgLogin.startsWith('⚠️') ? '#ff6666' : 'var(--nebula-green)' }}>
+                {msgLogin}
+              </p>
+            )}
+          </div>
+        )}
         <p style={{ marginBottom: 20, color: '#aaa' }}>
           Selecione <strong>exatamente 2 nações</strong> por grupo:
         </p>
@@ -242,23 +283,18 @@ export default function AbaPalpites({ onPalpiteEnviado }) {
               <p style={{ color: '#aaa', marginBottom: 12, fontSize: '0.95rem' }}>
                 🔑 <strong style={{ color: '#fff' }}>Já enviei meus palpites</strong> — confirme seu nome para desbloquear:
               </p>
-              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                <input
-                  type="text"
-                  list="nomes-palpites-list"
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+                <AutocompleteNome
                   value={nomeLogin}
-                  onChange={(e) => { setNomeLogin(e.target.value); setMsgLogin(''); }}
-                  onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+                  onChange={(v) => { setNomeLogin(v); setMsgLogin(''); }}
+                  onEnter={handleLogin}
+                  sugestoes={nomesExistentes}
                   placeholder="Digite seu nome exatamente como enviou..."
-                  style={{ flex: 1, minWidth: 220, background: 'var(--space-dark)', border: '1px solid #444', color: '#fff', padding: '10px 14px', borderRadius: 6, fontSize: '0.95rem' }}
                 />
-                <datalist id="nomes-palpites-list">
-                  {nomesExistentes.map((n) => <option key={n} value={n} />)}
-                </datalist>
                 <button
                   onClick={handleLogin}
                   disabled={verificando}
-                  style={{ background: 'var(--cosmic-blue)', border: 'none', color: '#fff', padding: '10px 22px', borderRadius: 6, cursor: 'pointer', fontWeight: 'bold', fontSize: '0.95rem', opacity: verificando ? 0.6 : 1 }}
+                  style={{ background: 'var(--cosmic-blue)', border: 'none', color: '#fff', padding: '10px 22px', borderRadius: 6, cursor: 'pointer', fontWeight: 'bold', fontSize: '0.95rem', opacity: verificando ? 0.6 : 1, whiteSpace: 'nowrap' }}
                 >
                   {verificando ? 'Verificando...' : 'Confirmar 🚀'}
                 </button>
@@ -299,7 +335,7 @@ export default function AbaPalpites({ onPalpiteEnviado }) {
                           style={{ fontWeight: 'bold', color: '#fff', position: 'sticky', left: 0, background: 'var(--space-panel)', cursor: 'pointer' }}
                           onClick={() => setAstronautaSelecionado(item)}
                         >
-                          🛸 {item.nome}
+                          <AvatarNome nome={item.nome} />
                         </td>
                         {LETRAS_GRUPOS.map((l) => (
                           <td key={l} style={{ fontSize: '0.85rem', whiteSpace: 'nowrap' }}>
